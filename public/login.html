@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>系統登入 - eCare</title>
+  <link rel="stylesheet" href="/fontawesome.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="overlay">
+    <div class="page">
+      <div class="header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="https://ecare.nfu.edu.tw/images/NFU-LOGO.jpg" style="height: 40px;" />
+          <h1>校務行政e化資訊平台 - eCare</h1>
+        </div>
+        <div class="links">
+          <a href="#">教師員生(在校)</a>
+          <a href="#">休學生</a>
+          <a href="#">家長查詢</a>
+        </div>
+      </div>
+      <div class="main-grid">
+        <div class="login-box">
+          <h2>系統登入 Login</h2>
+          <form action="/login" method="post">
+            <div class="field"><label>帳號 (Employee number or Student number)</label><input name="username" placeholder="請輸入員編/學號" required></div>
+            <div class="field"><label>密碼 (Password)</label><input name="password" type="password" placeholder="輸入密碼需重置系統所設定密碼" required></div>
+            <div class="field"><label>驗證碼 (Captcha)</label>
+              <div class="captcha-row">
+                <input class="captcha-input" name="captcha" placeholder="4碼英數字" required>
+                <img id="captcha" src="/captcha" style="width: 110px; height: 50px; border-radius: 6px; cursor: pointer; border: 1px solid #ccc;" title="點擊刷新驗證碼" />
+              </div>
+              <div class="captcha-hint">(點擊驗證碼圖片可刷新)</div>
+            </div>
+            <button class="button" type="submit">登入 (Login)</button>
+          </form>
+          <div class="link-row"><a href="#">忘記密碼</a></div>
+          <p id="msg"></p>
+          <p class="footer">1. 請使用校務行政帳號一律登入，當前登入帳號皆為授權帳號。 2. 帳號、密碼皆為即時變更以上賠，最長30分鐘。 3. 系統操作手冊(.pdf)</p>
+        </div>
+        <div class="portal-box">
+          <h2>常用系統快速連結 Quick Links</h2>
+          <div class="portal-list">
+            <a class="portal-item" data-icon="1" href="#"><div class="portal-icon"><i class="fas fa-pen fa-2x"></i></div><div class="portal-title">數位學習平台 uLearn</div><div class="portal-desc">提供數位教科課程互動功能</div></a>
+            <a class="portal-item" data-icon="2" href="#"><div class="portal-icon"><i class="fas fa-calendar fa-2x"></i></div><div class="portal-title">工讀生暨助理生考平台</div><div class="portal-desc">週數及連線工讀時數</div></a>
+            <a class="portal-item" data-icon="3" href="#"><div class="portal-icon"><i class="fas fa-clipboard-list fa-2x"></i></div><div class="portal-title">教務查詢整合平台</div><div class="portal-desc">成績、課程及排課報查詢</div></a>
+            <a class="portal-item" data-icon="4" href="#"><div class="portal-icon"><i class="fas fa-file fa-2x"></i></div><div class="portal-title">學生證明文件線上申請系統</div><div class="portal-desc">在學證明文件申請</div></a>
+            <a class="portal-item" data-icon="5" href="#"><div class="portal-icon"><i class="fas fa-check-circle fa-2x"></i></div><div class="portal-title">iAct活動報名系統</div><div class="portal-desc">查詢與報名各項活動</div></a>
+            <a class="portal-item" data-icon="6" href="#"><div class="portal-icon"><i class="fas fa-cog fa-2x"></i></div><div class="portal-title">電子化表單上簽核系統</div><div class="portal-desc">展簽核、工單簽簽簽簽</div></a>
+          </div>
+        </div>
+      </div>
+      <div class="footer">© 2025 校務行政e化資訊平台 - eCare - 國立虎尾科技大學</div>
+    </div>
+  </div>
+  <script>
+    const p = new URLSearchParams(location.search).get('msg');
+    const msgEl = document.getElementById('msg');
+    if (p === 'invalid') msgEl.textContent = '❌ 帳號或密碼錯誤';
+
+    // 驗證碼刷新功能
+    const captchaImg = document.getElementById('captcha');
+    if (captchaImg) {
+      captchaImg.addEventListener('click', () => {
+        captchaImg.src = '/captcha?t=' + new Date().getTime();
+      });
+    }
+  </script>
+</body>
+</html>
