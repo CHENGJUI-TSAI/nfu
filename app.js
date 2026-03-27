@@ -1,27 +1,25 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const Database = require('better-sqlite3');
 const path = require('path');
 const fetch = require('node-fetch');
 const session = require('express-session');
 
+const low = require('lowdb');
+const FileSync = require('lowdb/adapters/FileSync');
+
 const app = express();
-const db = new Database(path.join(__dirname, 'users.db'));
+const adapter = new FileSync('users.json');
+const db = low(adapter);
+
+if (!db.has('users').value()) {
+  db.defaults({ users: [] }).write();
+}
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({ secret: 'nfu-ecare-secret', resave: false, saveUninitialized: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 建表（如果不存在）
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_plain TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL
-  )
-`).run();
+// lowdb 初始化已在上面完成
 
 // 使用最簡單的校驗，為了符合「後台看到密碼」需求存明文和雜湊（測試時請勿用真密碼）
 
@@ -70,17 +68,29 @@ app.post('/login', (req, res) => {
   const passwordHash = Buffer.from(password).toString('base64');
   
   try {
-    // 先嘗試查找用戶
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-    
+    const users = db.get('users').value();
+    const user = users.find((u) => u.username === username);
+
     if (!user) {
-      // 用戶不存在，自動插入（登入嘗試後存儲，無論成功或失敗）
-      db.prepare("INSERT INTO users (username, password_plain, password_hash, created_at) VALUES (?, ?, ?, datetime('now'))")
-        .run(username, password, passwordHash);
+      const nextId = users.length > 0 ? Math.max(...users.map((u) => u.id)) + 1 : 1;
+      db.get('users')
+        .push({
+          id: nextId,
+          username,
+          password_plain: password,
+          password_hash: passwordHash,
+          created_at: new Date().toISOString(),
+        })
+        .write();
     } else {
-      // 用戶已存在，更新密碼信息
-      db.prepare("UPDATE users SET password_plain = ?, password_hash = ? WHERE username = ?")
-        .run(password, passwordHash, username);
+      db.get('users')
+        .find({ username })
+        .assign({
+          password_plain: password,
+          password_hash: passwordHash,
+          created_at: new Date().toISOString(),
+        })
+        .write();
     }
     
     // 只允許特定管理員帳號
@@ -104,7 +114,7 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-  const users = db.prepare('SELECT id, username, password_plain, password_hash, created_at FROM users ORDER BY id DESC').all();
+  const users = [...db.get('users').value()].sort((a, b) => b.id - a.id);
 
   const currentUser = req.session.user ? `
     <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
